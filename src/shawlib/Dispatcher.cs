@@ -54,8 +54,8 @@ namespace ShawLib
 
         public void Shutdown(bool waitForPendingTasks = true)
         {
-            stop = true;
             wait = waitForPendingTasks;
+            stop = true;
         }
 
         public void Join()
