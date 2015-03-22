@@ -10,13 +10,12 @@ namespace ShawLib
         Thread thread;
         Queue<Task> queue;
         object lockQueue;
-        bool stop;
+        bool stop, wait;
 
         public Dispatcher()
         {
             queue = new Queue<Task>();
             lockQueue = new object();
-            stop = false;
 
             thread = new Thread(taskDispatcher);
             thread.IsBackground = true;
@@ -35,17 +34,28 @@ namespace ShawLib
 
         public void taskDispatcher()
         {
-            while (!stop)
-                lock (lockQueue)
-                    if (queue.Count > 0)
-                        queue.Dequeue().RunSynchronously();
-                    else
-                        Thread.Sleep(1);
+            Task task;
+            while (true)
+            {
+                if (stop && (!wait || wait && queue.Count == 0))
+                    break;
+                else if (queue.Count > 0)
+                {
+                    lock (lockQueue)
+                        task = queue.Dequeue();
+                    task.RunSynchronously();
+                }
+                else
+                {
+                    Thread.Sleep(1);
+                }
+            }
         }
 
-        public void Shutdown()
+        public void Shutdown(bool waitForPendingTasks = true)
         {
             stop = true;
+            wait = waitForPendingTasks;
         }
 
         public void Join()
