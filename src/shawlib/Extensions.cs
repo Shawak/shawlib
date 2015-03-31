@@ -48,7 +48,7 @@ namespace ShawLib
             .Case<char, byte[]>((byte[] bytes) => { return (char)((ushort)bytes[0] + bytes[1]); })
             .Case<string, byte[]>((byte[] bytes) => { return Encoding.GetString(bytes); });
 
-        internal static Dictionary<Type, int> valueTypeLengths = new Dictionary<Type, int>()
+        static Dictionary<Type, int> valueTypeLengths = new Dictionary<Type, int>()
         {
             { typeof(bool), 1 },
             { typeof(byte), 1 },
