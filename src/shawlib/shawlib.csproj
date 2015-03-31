@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{D4ED6046-C2F8-428F-BCB4-67DFBE2F01EE}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ShawLib</RootNamespace>
     <AssemblyName>shawlib</AssemblyName>
@@ -29,6 +29,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -45,6 +48,7 @@
     <Compile Include="Dispatcher.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="FpsCounter.cs" />
+    <Compile Include="Memory.cs" />
     <Compile Include="Packet\IPacket.cs" />
     <Compile Include="MethodLinker.cs" />
     <Compile Include="Network\TcpClient.cs" />

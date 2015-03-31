@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Net;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace ShawLib
 {
     public static class Extensions
     {
-        public static readonly Encoding Encoding = Encoding.GetEncoding("ISO-8859-1");
+        public static readonly Encoding Encoding = Encoding.UTF8; //Encoding.GetEncoding("ISO-8859-1");
 
         // Values to Bytes
         static TypeSwitchReturnableArgs bytesBitConverterProvider = new TypeSwitchReturnableArgs()
@@ -48,7 +48,7 @@ namespace ShawLib
             .Case<char, byte[]>((byte[] bytes) => { return (char)((ushort)bytes[0] + bytes[1]); })
             .Case<string, byte[]>((byte[] bytes) => { return Encoding.GetString(bytes); });
 
-        static Dictionary<Type, int> valueTypeLengths = new Dictionary<Type, int>()
+        internal static Dictionary<Type, int> valueTypeLengths = new Dictionary<Type, int>()
         {
             { typeof(bool), 1 },
             { typeof(byte), 1 },
@@ -63,6 +63,20 @@ namespace ShawLib
             { typeof(double), 8 },
             { typeof(char), 2 }
         };
+
+        public static int MemSize(this IConvertible value)
+        {
+            return value.GetType().MemSize();
+        }
+
+        public static int MemSize(this Type type)
+        {
+            if (!valueTypeLengths.ContainsKey(type))
+                //throw new Exception("can't get memory size of type " + type);
+                return Marshal.SizeOf(type);
+
+            return valueTypeLengths[type];
+        }
 
         // Streams
 
@@ -125,9 +139,9 @@ namespace ShawLib
 
         // Cast
 
-        public static Target To<Target>(this IConvertible value) where Target : IConvertible
+        public static T To<T>(this IConvertible value) where T : IConvertible
         {
-            return (Target)Convert.ChangeType(value, typeof(Target), CultureInfo.InvariantCulture);
+            return (T)Convert.ChangeType(value, typeof(T), CultureInfo.InvariantCulture);
         }
     }
 }
