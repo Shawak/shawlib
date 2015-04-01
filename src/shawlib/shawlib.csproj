@@ -49,6 +49,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="FpsCounter.cs" />
     <Compile Include="Memory.cs" />
+    <Compile Include="NativeMethods.cs" />
     <Compile Include="Packet\IPacket.cs" />
     <Compile Include="MethodLinker.cs" />
     <Compile Include="Network\TcpClient.cs" />

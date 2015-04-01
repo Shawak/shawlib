@@ -10,7 +10,6 @@ namespace ShawLib.Cryptography
 
         public static byte[] Encrypt(byte[] data, byte[] key)
         {
-            using (var ms = new MemoryStream())
             using (var AES = new RijndaelManaged())
             {
                 AES.KeySize = 256;
@@ -21,16 +20,17 @@ namespace ShawLib.Cryptography
                 AES.IV = driveBytes.GetBytes(AES.BlockSize / 8);
                 AES.Mode = CipherMode.CBC;
 
+                using (var ms = new MemoryStream())
                 using (var cs = new CryptoStream(ms, AES.CreateEncryptor(), CryptoStreamMode.Write))
+                {
                     cs.Write(data, 0, data.Length);
-
-                return ms.ToArray();
+                    return ms.ToArray();
+                }
             }
         }
 
         public static byte[] Decrypt(byte[] encrypted, byte[] key)
         {
-            using (var ms = new MemoryStream())
             using (var AES = new RijndaelManaged())
             {
                 AES.KeySize = 256;
@@ -41,10 +41,12 @@ namespace ShawLib.Cryptography
                 AES.IV = driveBytes.GetBytes(AES.BlockSize / 8);
                 AES.Mode = CipherMode.CBC;
 
+                using(var ms = new MemoryStream())
                 using (var cs = new CryptoStream(ms, AES.CreateDecryptor(), CryptoStreamMode.Write))
+                {
                     cs.Write(encrypted, 0, encrypted.Length);
-
-                return ms.ToArray();
+                    return ms.ToArray();
+                }
             }
         }
     }

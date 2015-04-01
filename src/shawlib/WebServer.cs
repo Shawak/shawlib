@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace ShawLib
 {
-    public class WebServer
+    public class WebServer : IDisposable
     {
         HttpListener listener;
         Func<HttpListenerRequest, string> method;
+        bool disposed;
 
         /// <summary>
         /// Initalize like new WebServer(answer, "http://*:80/name/");
@@ -72,7 +73,23 @@ namespace ShawLib
         public void Stop()
         {
             listener.Stop();
-            listener.Close();
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+
+            if (disposing)
+                listener.Close();
+
+            disposed = true;
         }
     }
 }
