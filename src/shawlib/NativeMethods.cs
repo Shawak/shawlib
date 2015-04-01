@@ -39,7 +39,7 @@ namespace ShawLib
             IntPtr hProcess,
             IntPtr lpBaseAddress,
             [Out] byte[] lpBuffer,
-            IntPtr dwSize,
+            int dwSize,
             out IntPtr lpNumberOfBytesRead);
 
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -47,7 +47,7 @@ namespace ShawLib
             IntPtr hProcess,
             IntPtr lpBaseAddress,
             byte[] lpBuffer,
-            IntPtr nSize,
+            int nSize,
             out IntPtr lpNumberOfBytesWritten);
 
         [DllImport("kernel32.dll")]

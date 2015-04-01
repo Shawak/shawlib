@@ -21,47 +21,44 @@ namespace ShawLib
 
         public T Read<T>(IntPtr address) where T : IConvertible
         {
+            byte[] buffer;
             var type = typeof(T);
             if (type == typeof(string))
             {
-                var buffer = new List<byte>();
+                var list = new List<byte>();
                 do
                 {
                     var b = Read<byte>(address);
                     address += 0x1;
                 }
-                while (buffer[buffer.Count] != 0);
-                return buffer.ToArray().To<T>();
+                while (list[list.Count] != 0);
+                buffer = list.ToArray();
             }
             else
             {
                 var size = typeof(T).MemSize();
-                var buffer = new byte[size];
+                buffer = new byte[size];
                 IntPtr read;
-                NativeMethods.ReadProcessMemory(hProc, address, buffer, (IntPtr)size, out read);
-                return buffer.To<T>();
+                NativeMethods.ReadProcessMemory(hProc, address, buffer, size, out read);
+                if ((int)read != size)
+                    throw new Exception("could not write value, maybe it's protected?");
             }
+            return buffer.To<T>();
         }
 
         public void Write(IntPtr address, IConvertible value)
         {
-            var type = typeof(string);
-            var bytes = value.GetBytes();
+            var type = value.GetType();
             if (type == typeof(string))
-            {
-                foreach (var b in bytes)
-                {
-                    Write(address, b);
-                    address += 0x1;
-                }
-                Write(address, 0);
-            }
-            else
-            {
-                IntPtr written;
-                NativeMethods.WriteProcessMemory(hProc, address, bytes, (IntPtr)bytes.Length, out written);
-            }
+                value += "\0";
+
+            var bytes = value.GetBytes();
+            IntPtr written;
+            NativeMethods.WriteProcessMemory(hProc, address, bytes, bytes.Length, out written);
+            if ((int)written != value.MemSize())
+                throw new Exception("could not write value, maybe it's protected?");
         }
+
 
         public uint RemoveProtection(IntPtr address, UIntPtr size)
         {
