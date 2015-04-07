@@ -26,17 +26,20 @@ namespace ShawLib
             if (type == typeof(string))
             {
                 var list = new List<byte>();
-                do
+                while (true)
                 {
                     var b = Read<byte>(address);
+                    if (b == 0)
+                        break;
+
+                    list.Add(b);
                     address += 0x1;
                 }
-                while (list[list.Count] != 0);
                 buffer = list.ToArray();
             }
             else
             {
-                var size = typeof(T).MemSize();
+                var size = type.MemSize();
                 buffer = new byte[size];
                 IntPtr read;
                 NativeMethods.ReadProcessMemory(hProc, address, buffer, size, out read);
@@ -55,10 +58,55 @@ namespace ShawLib
             var bytes = value.GetBytes();
             IntPtr written;
             NativeMethods.WriteProcessMemory(hProc, address, bytes, bytes.Length, out written);
-            if ((int)written != value.MemSize())
+            if ((int)written != bytes.Length)
                 throw new Exception("could not write value, maybe it's protected?");
         }
 
+        /// <summary>
+        /// not tested / not done
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="mask"></param>
+        /// <param name="pattern"></param>
+        /// <returns></returns>
+        public IntPtr FindPattern(IntPtr address, string mask, byte[] pattern)
+        {
+            var size = 2 ^ 32;
+            byte[] buffer;
+            IntPtr read;
+
+            while (true)
+            {
+                buffer = new byte[size];
+                var uSize = new UIntPtr((uint)size);
+                var protection = RemoveProtection(address, uSize);
+                NativeMethods.ReadProcessMemory(hProc, address, buffer, size, out read);
+                AddProtection(address, uSize, protection);
+                if ((int)read != size)
+                    continue; //throw new Exception("could not write value, maybe it's protected?");
+
+                for (int bOffset = 0; bOffset < buffer.Length - mask.Length; bOffset++)
+                    if (maskCheck(buffer, bOffset, mask, pattern))
+                        return new IntPtr((long)address + bOffset);
+
+                address += size;
+            }
+        }
+
+        // not tested
+        bool maskCheck(byte[] buffer, int offset, string mask, byte[] pattern)
+        {
+            if (buffer.Length - offset < mask.Length)
+                return false;
+
+            for (int pOffset = 0; pOffset < pattern.Length; pOffset++)
+                if (mask[pOffset] == '?')
+                    continue;
+                else if (pattern[pOffset] != buffer[offset + pOffset])
+                    return false;
+
+            return true;
+        }
 
         public uint RemoveProtection(IntPtr address, UIntPtr size)
         {
