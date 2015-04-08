@@ -4,13 +4,6 @@ using System.Diagnostics;
 
 namespace ShawLib
 {
-    class MemoryException : Exception
-    {
-        public MemoryException(string message)
-            : base(message)
-        { }
-    }
-
     public class Memory : IDisposable
     {
         IntPtr hProc;
@@ -18,8 +11,7 @@ namespace ShawLib
 
         public Memory(Process proc)
             : this(proc.Id)
-        {
-        }
+        { }
 
         public Memory(int procId)
         {
