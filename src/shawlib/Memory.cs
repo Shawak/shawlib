@@ -75,9 +75,13 @@ namespace ShawLib
                 throw new MemoryException("could not write value, maybe it's protected?");
         }
 
-        public IntPtr FindPattern(IntPtr address, string mask, byte[] pattern)
+        public IntPtr FindPattern(IntPtr address, byte[] pattern, string mask = null)
         {
-            var mainAddress = address;
+            if (mask == null)
+                mask = new String('x', pattern.Length);
+            else if (mask.Length != pattern.Length)
+                throw new Exception("The pattern length does not match with the mask length");
+
             var size = 2 << 16;
             byte[] buffer;
 
