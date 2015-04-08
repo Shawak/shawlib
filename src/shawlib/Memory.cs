@@ -4,6 +4,13 @@ using System.Diagnostics;
 
 namespace ShawLib
 {
+    class MemoryException : Exception
+    {
+        public MemoryException(string message)
+            : base(message)
+        { }
+    }
+
     public class Memory : IDisposable
     {
         IntPtr hProc;
@@ -40,13 +47,19 @@ namespace ShawLib
             else
             {
                 var size = type.MemSize();
-                buffer = new byte[size];
-                IntPtr read;
-                NativeMethods.ReadProcessMemory(hProc, address, buffer, size, out read);
-                if ((int)read != size)
-                    throw new Exception("could not write value, maybe it's protected?");
+                buffer = Read(address, size);
             }
             return buffer.To<T>();
+        }
+
+        public byte[] Read(IntPtr address, int size)
+        {
+            var buffer = new byte[size];
+            IntPtr read;
+            NativeMethods.ReadProcessMemory(hProc, address, buffer, size, out read);
+            if ((int)read != size)
+                throw new MemoryException("could not read value, maybe it's protected?");
+            return buffer;
         }
 
         public void Write(IntPtr address, IConvertible value)
@@ -59,41 +72,27 @@ namespace ShawLib
             IntPtr written;
             NativeMethods.WriteProcessMemory(hProc, address, bytes, bytes.Length, out written);
             if ((int)written != bytes.Length)
-                throw new Exception("could not write value, maybe it's protected?");
+                throw new MemoryException("could not write value, maybe it's protected?");
         }
 
-        /// <summary>
-        /// not tested / not done
-        /// </summary>
-        /// <param name="address"></param>
-        /// <param name="mask"></param>
-        /// <param name="pattern"></param>
-        /// <returns></returns>
         public IntPtr FindPattern(IntPtr address, string mask, byte[] pattern)
         {
-            var size = 2 ^ 32;
+            var mainAddress = address;
+            var size = 2 << 16;
             byte[] buffer;
-            IntPtr read;
 
             while (true)
             {
-                buffer = new byte[size];
-                var uSize = new UIntPtr((uint)size);
-                var protection = RemoveProtection(address, uSize);
-                NativeMethods.ReadProcessMemory(hProc, address, buffer, size, out read);
-                AddProtection(address, uSize, protection);
-                if ((int)read != size)
-                    continue; //throw new Exception("could not write value, maybe it's protected?");
-
+                buffer = Read(address, size);
                 for (int bOffset = 0; bOffset < buffer.Length - mask.Length; bOffset++)
                     if (maskCheck(buffer, bOffset, mask, pattern))
                         return new IntPtr((long)address + bOffset);
 
                 address += size;
+                address -= pattern.Length;
             }
         }
 
-        // not tested
         bool maskCheck(byte[] buffer, int offset, string mask, byte[] pattern)
         {
             if (buffer.Length - offset < mask.Length)
