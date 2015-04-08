@@ -52,6 +52,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="FpsCounter.cs" />
     <Compile Include="Memory.cs" />
+    <Compile Include="MemoryException.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Packet\IPacket.cs" />
     <Compile Include="MethodLinker.cs" />
