@@ -86,7 +86,8 @@ namespace ShawLib
                 NativeMethods.VirtualQueryEx(hProc, (IntPtr)address, out info, sizeOf);
 
                 // if the memory chunk is accessible
-                if (info.Protect == AllocationProtect.PAGE_READWRITE && info.State == MemoryRegionState.Commit)
+                if ((info.Protect == AllocationProtect.PAGE_READWRITE || info.Protect == AllocationProtect.PAGE_READONLY) &&
+                    info.State == MemoryRegionState.Commit)
                 {
                     var buffer = Read(info.BaseAddress, (int)info.RegionSize);
                     for (int bOffset = 0; bOffset < buffer.Length - mask.Length; bOffset++)
