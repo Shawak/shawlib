@@ -68,31 +68,29 @@ namespace ShawLib
                 throw new MemoryException("could not write value, maybe it's protected?");
         }
 
-        public IntPtr FindPattern(byte[] pattern, string mask = null)
+        public IntPtr Search(byte[] pattern, string mask = null)
         {
-            if (mask == null)
-                mask = new String('x', pattern.Length);
-            else if (mask.Length != pattern.Length)
+            if (mask != null && mask.Length != pattern.Length)
                 throw new MemoryException("The pattern length does not match with the mask length");
 
             SystemInfo systemInfo;
             NativeMethods.GetSystemInfo(out systemInfo);
+            var maxAddress = (long)systemInfo.MaximumApplicationAddress;
             var address = systemInfo.MinimumApplicationAddress;
 
             MemoryBasicInformation info;
             var sizeOf = (uint)Marshal.SizeOf(typeof(MemoryBasicInformation));
-            while ((long)address < (long)systemInfo.MaximumApplicationAddress)
+            while ((long)address < maxAddress)
             {
                 NativeMethods.VirtualQueryEx(hProc, (IntPtr)address, out info, sizeOf);
 
-                // if the memory chunk is accessible
                 if ((info.Protect == AllocationProtect.PAGE_READWRITE || info.Protect == AllocationProtect.PAGE_READONLY) &&
                     info.State == MemoryRegionState.Commit)
                 {
                     var buffer = Read(info.BaseAddress, (int)info.RegionSize);
-                    for (int bOffset = 0; bOffset < buffer.Length - mask.Length; bOffset++)
-                        if (maskCheck(buffer, bOffset, mask, pattern))
-                            return new IntPtr((long)address + bOffset);
+                    for (int offset = 0; offset < buffer.Length - pattern.Length; offset++)
+                        if (checkMask(buffer, offset, pattern, mask))
+                            return new IntPtr((long)address + offset);
                 }
 
                 address += (int)info.RegionSize;
@@ -101,16 +99,25 @@ namespace ShawLib
             return IntPtr.Zero;
         }
 
-        bool maskCheck(byte[] buffer, int offset, string mask, byte[] pattern)
+        bool checkMask(byte[] bytes, int offset, byte[] pattern, string mask)
         {
-            if (buffer.Length - offset < mask.Length)
+            if (bytes.Length - offset < pattern.Length)
                 return false;
 
-            for (int pOffset = 0; pOffset < pattern.Length; pOffset++)
-                if (mask[pOffset] == '?')
-                    continue;
-                else if (pattern[pOffset] != buffer[offset + pOffset])
-                    return false;
+            if (mask != null)
+            {
+                for (int pOffset = 0; pOffset < pattern.Length; pOffset++)
+                    if (mask[pOffset] == '?')
+                        continue;
+                    else if (pattern[pOffset] != bytes[offset + pOffset])
+                        return false;
+            }
+            else
+            {
+                for (int i = offset; i < offset + pattern.Length; i++)
+                    if (bytes[i] != pattern[i - offset])
+                        return false;
+            }
 
             return true;
         }
