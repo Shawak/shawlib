@@ -37,8 +37,7 @@ namespace BKR
         /// </summary>
         public TcpClient()
             : this(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
-        {
-        }
+        { }
 
         // used by the client class and server class
         internal TcpClient(Socket client)
@@ -122,7 +121,7 @@ namespace BKR
                     var length = BitConverter.ToInt32(lengthBytes, 0);
                     if (length <= 0)
                         throw new Exception("packet length below zero");
-                    else if (length > client.ReceiveBufferSize - length)
+                    else if (length > client.ReceiveBufferSize - lengthBytes.Length)
                         throw new Exception("packet length above limit");
 
                     // Receive packet bytes
@@ -195,15 +194,15 @@ namespace BKR
         /// </summary>
         /// <param name="ip">The server ip address</param>
         /// <param name="port">The server port</param>
-        public void Connect(IPAddress ip, int port)
+        public void Connect(IPAddress ip, int port, int timeout = 3000)
         {
             bool success = false;
-            
+
             try
             {
                 // start connecting with a timeout of three seconds
                 var result = client.BeginConnect(new IPEndPoint(ip, port), null, null);
-                success = result.AsyncWaitHandle.WaitOne(3000);
+                success = result.AsyncWaitHandle.WaitOne(timeout);
 
                 if (success)
                     client.EndConnect(result);
@@ -276,12 +275,12 @@ namespace BKR
                 // wait for pending packets to be send
                 while (queueSend.Count > 0)
                     Thread.Sleep(1);
+
                 stop = true;
                 threads[1].Join();
-
                 client.Dispose();
             }
- 
+
             disposed = true;
         }
     }

@@ -24,8 +24,7 @@ namespace BKR
         /// Creates a new server instance 
         /// </summary>
         public TcpServer()
-        {
-        }
+        { }
 
         void onClientConnectEvent(TcpClient client)
         {
@@ -58,6 +57,7 @@ namespace BKR
 
             // Start accepting incoming sockets
             threadAcceptSockts = new Thread(taskAcceptSockets);
+            threadAcceptSockts.IsBackground = true;
             threadAcceptSockts.Start();
         }
 
