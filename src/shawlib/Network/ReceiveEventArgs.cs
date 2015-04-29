@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace BKR
+namespace ShawLib.Network
 {
     public class ReceiveEventArgs : EventArgs
     {

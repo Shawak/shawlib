@@ -3,18 +3,15 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
-namespace BKR
+namespace ShawLib.Network
 {
-    public delegate void OnClientConnectHandler(object sender, ClientEventArgs e);
-    public delegate void OnClientDisconnectHandler(object sender, ClientEventArgs e);
-
     public class TcpServer : IDisposable
     {
         public IPAddress IP { get; private set; }
         public int Port { get; private set; }
 
-        public event OnClientConnectHandler OnClientConnect;
-        public event OnClientDisconnectHandler OnClientDisconnect;
+        public event EventHandler<ClientEventArgs> OnClientConnect;
+        public event EventHandler<ClientEventArgs> OnClientDisconnect;
 
         Socket listener;
         bool disposed;

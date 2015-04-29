@@ -5,26 +5,21 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BKR
+namespace ShawLib.Network
 {
-    public delegate void OnConnectHandler(object sender, EventArgs e);
-    public delegate void OnConnectFailedHandler(object sender, ExceptionEventArgs e);
-    public delegate void OnDisconnectHandler(object sender, ExceptionEventArgs e);
-    public delegate void OnReceiveHandler(object sender, ReceiveEventArgs e);
-
     public class TcpClient : IDisposable
     {
         public IPAddress IP { get { return ((IPEndPoint)client.RemoteEndPoint).Address; } }
         public int Port { get { return ((IPEndPoint)client.RemoteEndPoint).Port; } }
 
-        public event OnConnectHandler OnConnect;
-        public event OnConnectFailedHandler OnConnectFailed;
-        public event OnDisconnectHandler OnDisconnect;
-        public event OnReceiveHandler OnReceive;
+        public event EventHandler<EventArgs> OnConnect;
+        public event EventHandler<ExceptionEventArgs> OnConnectFailed;
+        public event EventHandler<ExceptionEventArgs> OnDisconnect;
+        public event EventHandler<ReceiveEventArgs> OnReceive;
 
         Socket client;
-        bool disposed, stop;
         Task taskConnect;
+        bool disposed, stop;
 
         Queue<byte[]> queueReceive;
         Queue<byte[]> queueSend;
