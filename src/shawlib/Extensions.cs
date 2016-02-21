@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Windows.Forms;
 
 namespace ShawLib
 {
@@ -142,6 +143,13 @@ namespace ShawLib
         public static T To<T>(this IConvertible value) where T : IConvertible
         {
             return (T)Convert.ChangeType(value, typeof(T), CultureInfo.InvariantCulture);
+        }
+
+        // Forms
+
+        public static void Invoke(this Control ctrl, Action action)
+        {
+            ctrl.Invoke((Delegate)action);
         }
     }
 }

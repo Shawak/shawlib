@@ -38,6 +38,9 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -54,6 +57,12 @@
     <Compile Include="Memory.cs" />
     <Compile Include="MemoryException.cs" />
     <Compile Include="NativeMethods.cs" />
+    <Compile Include="Overlay.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Overlay.Designer.cs">
+      <DependentUpon>Overlay.cs</DependentUpon>
+    </Compile>
     <Compile Include="Packet\IPacket.cs" />
     <Compile Include="MethodLinker.cs" />
     <Compile Include="Network\TcpClient.cs" />
@@ -66,6 +75,9 @@
     <Compile Include="TypeSwitch.cs" />
     <Compile Include="WebServer.cs" />
     <Compile Include="WebUser.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
