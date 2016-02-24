@@ -147,9 +147,22 @@ namespace ShawLib
 
         // Forms
 
-        public static void Invoke(this Control ctrl, Action action)
+        public static void Invoke(this Control control, Action action)
         {
-            ctrl.Invoke((Delegate)action);
+            if (control.InvokeRequired)
+            {
+                try
+                {
+                    control.Invoke(action);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // throws if form/controls gets disposed
+                }
+                return;
+            }
+
+            action();
         }
     }
 }
