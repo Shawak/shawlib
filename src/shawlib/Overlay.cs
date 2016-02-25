@@ -29,7 +29,7 @@ namespace ShawLib
                     val = 0;
 
                 opacity = (byte)val;
-                NativeMethods.SetLayeredWindowAttributes(this.Handle, 0, (byte)opacity, 0x2);
+                NativeMethods.SetLayeredWindowAttributes(this.Handle, 0, opacity, 0x2);
             }
         }
 
