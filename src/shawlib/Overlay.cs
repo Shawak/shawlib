@@ -8,7 +8,7 @@ namespace ShawLib
     {
         Margins marg;
 
-        int opacity = 255;
+        byte opacity = 255;
         public new virtual double Opacity
         {
             get
@@ -17,14 +17,19 @@ namespace ShawLib
             }
             set
             {
-                var val = 255d * value;
-                val = Math.Round(val, 0);
-
-                if (val < 0 || val > 255)
+                if (value < 0 || value > 1)
                     return;
 
-                opacity = (int)val;
-                NativeMethods.SetLayeredWindowAttributes(this.Handle, 0, 255, 0x2);
+                var val = 255 * value;
+                val = Math.Round(val, 0);
+
+                if (val > 255)
+                    val = 255;
+                else if (val < 0)
+                    val = 0;
+
+                opacity = (byte)val;
+                NativeMethods.SetLayeredWindowAttributes(this.Handle, 0, (byte)opacity, 0x2);
             }
         }
 
