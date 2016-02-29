@@ -5,6 +5,14 @@ namespace ShawLib
 {
     public class FpsCounter
     {
+        /* Use like this:
+         * DateTime lastTime = DateTime.Now;
+         * [...]
+         * var delta = (float)(DateTime.Now - lastTime).TotalMilliseconds / 1000;
+         * fpsCounter.Update(delta);
+         * lastTime = DateTime.Now;
+         */
+
         public float CurrentFPS { get; private set; }
         public float AverageFPS { get; private set; }
         public float Frametime { get; private set; }
