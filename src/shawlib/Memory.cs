@@ -122,16 +122,16 @@ namespace ShawLib
             return true;
         }
 
-        public uint RemoveProtection(IntPtr address, UIntPtr size)
+        public uint RemoveProtection(IntPtr address, int size)
         {
             uint protection = 0;
-            NativeMethods.VirtualProtectEx(hProc, address, size, 0x40, out protection);
+            NativeMethods.VirtualProtectEx(hProc, address, (UIntPtr)size, 0x40, out protection);
             return protection;
         }
 
-        public void AddProtection(IntPtr address, UIntPtr size, uint protection)
+        public void AddProtection(IntPtr address, int size, uint protection)
         {
-            NativeMethods.VirtualProtectEx(hProc, address, size, protection, out protection);
+            NativeMethods.VirtualProtectEx(hProc, address, (UIntPtr)size, protection, out protection);
         }
 
         public void Dispose()
