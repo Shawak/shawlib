@@ -68,6 +68,43 @@ namespace ShawLib
                 throw new MemoryException("could not write value, maybe it's protected?");
         }
 
+        static int SimpleBoyerMooreSearch(byte[] haystack, byte[] needle)
+        {
+            var lookup = new int[256];
+            for (int i = 0; i < lookup.Length; i++)
+                lookup[i] = needle.Length;
+
+            for (int i = 0; i < needle.Length; i++)
+                lookup[needle[i]] = needle.Length - i - 1;
+
+            var index = needle.Length - 1;
+            var lastByte = needle[needle.Length - 1];
+            while (index < haystack.Length)
+            {
+                var checkByte = haystack[index];
+                if (haystack[index] == lastByte)
+                {
+                    var found = true;
+                    for (int j = needle.Length - 2; j >= 0; j--)
+                        if (haystack[index - needle.Length + j + 1] != needle[j])
+                        {
+                            found = false;
+                            break;
+                        }
+
+                    if (found)
+                        return index - needle.Length + 1;
+                    else
+                        index++;
+                }
+                else
+                {
+                    index += lookup[checkByte];
+                }
+            }
+            return -1;
+        }
+
         public IntPtr Search(byte[] pattern, string mask = null)
         {
             if (mask != null && mask.Length != pattern.Length)
@@ -88,9 +125,18 @@ namespace ShawLib
                     info.State == MemoryRegionState.Commit)
                 {
                     var buffer = Read(info.BaseAddress, (int)info.RegionSize);
-                    for (int offset = 0; offset < buffer.Length - pattern.Length; offset++)
-                        if (checkMask(buffer, offset, pattern, mask))
-                            return new IntPtr((long)address + offset);
+                    if (mask == null)
+                    {
+                        var ret = SimpleBoyerMooreSearch(buffer, pattern);
+                        if (ret != -1)
+                            return (IntPtr)((long)address + ret);
+                    }
+                    else
+                    {
+                        for (int offset = 0; offset < buffer.Length - pattern.Length; offset++)
+                            if (checkMask(buffer, offset, pattern, mask))
+                                return new IntPtr((long)address + offset);
+                    }
                 }
 
                 address += (int)info.RegionSize;
@@ -104,20 +150,11 @@ namespace ShawLib
             if (bytes.Length - offset < pattern.Length)
                 return false;
 
-            if (mask != null)
-            {
-                for (int pOffset = 0; pOffset < pattern.Length; pOffset++)
-                    if (mask[pOffset] == '?')
-                        continue;
-                    else if (pattern[pOffset] != bytes[offset + pOffset])
-                        return false;
-            }
-            else
-            {
-                for (int i = offset; i < offset + pattern.Length; i++)
-                    if (bytes[i] != pattern[i - offset])
-                        return false;
-            }
+            for (int pOffset = 0; pOffset < pattern.Length; pOffset++)
+                if (mask[pOffset] == '?')
+                    continue;
+                else if (pattern[pOffset] != bytes[offset + pOffset])
+                    return false;
 
             return true;
         }
