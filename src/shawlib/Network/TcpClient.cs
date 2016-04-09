@@ -18,7 +18,7 @@ namespace ShawLib.Network
         public event EventHandler<ReceiveEventArgs> OnReceive;
 
         Socket client;
-        Task taskConnect;
+        Task[] tasks;
         bool disposed, stop;
 
         Queue<byte[]> queueReceive;
@@ -82,7 +82,7 @@ namespace ShawLib.Network
                 handler(this, new ReceiveEventArgs(this, bytes));
         }
 
-        void taskHandle()
+        void handle()
         {
             while (client != null && !stop)
             {
@@ -100,7 +100,7 @@ namespace ShawLib.Network
             }
         }
 
-        void taskReceive()
+        void receive()
         {
             var lengthBytes = new byte[4];
             byte[] buffer;
@@ -135,7 +135,7 @@ namespace ShawLib.Network
             }
         }
 
-        void taskSend()
+        void send()
         {
             var lengthBytes = new byte[4];
             byte[] buffer;
@@ -169,19 +169,6 @@ namespace ShawLib.Network
             {
                 onDisconnectEvent(ex);
             }
-        }
-
-        /// <summary>
-        /// Stats to connect to a server asynchronous
-        /// </summary>
-        /// <param name="ip">The server ip address</param>
-        /// <param name="port">The server port</param>
-        public void StartConnect(IPAddress ip, int port)
-        {
-            if (taskConnect != null && !taskConnect.IsCompleted)
-                return;
-
-            taskConnect = Task.Run(() => Connect(ip, port));
         }
 
         /// <summary>
@@ -219,20 +206,18 @@ namespace ShawLib.Network
             onConnectEvent();
         }
 
-        Thread[] threads;
-
         internal void Start()
         {
             // create new threads send/receive/handle
-            threads = new Thread[] {
-                new Thread(taskReceive) { IsBackground = true },
-                new Thread(taskSend) { IsBackground = true },
-                new Thread(taskHandle) { IsBackground = true }
+            tasks = new Task[]
+            {
+                new Task(receive),
+                new Task(send),
+                new Task(handle)
             };
 
-            // run these threads
-            foreach (var thread in threads)
-                thread.Start();
+            foreach (var task in tasks)
+                task.Start();
         }
 
         /// <summary>
@@ -272,7 +257,7 @@ namespace ShawLib.Network
                     Thread.Sleep(1);
 
                 stop = true;
-                threads[1].Join();
+                tasks[1].Wait(); // send last remaining packets
                 client.Dispose();
             }
 
