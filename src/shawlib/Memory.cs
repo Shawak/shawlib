@@ -105,7 +105,7 @@ namespace ShawLib
             return -1;
         }
 
-        public IntPtr Search(byte[] pattern, string mask = null)
+        public IntPtr Search(byte[] pattern, string mask = null, bool includeReadonly = false)
         {
             if (mask != null && mask.Length != pattern.Length)
                 throw new MemoryException("The pattern length does not match with the mask length");
@@ -119,17 +119,17 @@ namespace ShawLib
             var sizeOf = (uint)Marshal.SizeOf(typeof(MemoryBasicInformation));
             while ((long)address < maxAddress)
             {
-                NativeMethods.VirtualQueryEx(hProc, (IntPtr)address, out info, sizeOf);
+                NativeMethods.VirtualQueryEx(hProc, address, out info, sizeOf);
 
-                if ((info.Protect == AllocationProtect.PAGE_READWRITE || info.Protect == AllocationProtect.PAGE_READONLY) &&
+                if ((info.Protect == AllocationProtect.PAGE_READWRITE || (includeReadonly && info.Protect == AllocationProtect.PAGE_READONLY)) &&
                     info.State == MemoryRegionState.Commit)
                 {
                     var buffer = Read(info.BaseAddress, (int)info.RegionSize);
                     if (mask == null)
                     {
-                        var ret = SimpleBoyerMooreSearch(buffer, pattern);
-                        if (ret != -1)
-                            return (IntPtr)((long)address + ret);
+                        var offset = SimpleBoyerMooreSearch(buffer, pattern);
+                        if (offset != -1)
+                            return (IntPtr)((long)address + offset);
                     }
                     else
                     {
