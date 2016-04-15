@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using ShawLib;
 
 namespace ShawLib.Network
 {
@@ -11,6 +13,7 @@ namespace ShawLib.Network
     {
         public IPAddress IP { get { return ((IPEndPoint)client.RemoteEndPoint).Address; } }
         public int Port { get { return ((IPEndPoint)client.RemoteEndPoint).Port; } }
+        public bool Connected { get { return client != null ? client.Connected : false; } }
 
         public event EventHandler<EventArgs> OnConnect;
         public event EventHandler<ExceptionEventArgs> OnConnectFailed;
@@ -18,14 +21,8 @@ namespace ShawLib.Network
         public event EventHandler<ReceiveEventArgs> OnReceive;
 
         Socket client;
-        Task taskConnect;
-        bool disposed, stop;
-
-        Queue<byte[]> queueReceive;
-        Queue<byte[]> queueSend;
-
-        object lock_queueReceive;
-        object lock_queueSend;
+        Thread threadReceive;
+        bool disposed;
 
         /// <summary>
         /// Creates a new client instance
@@ -38,20 +35,6 @@ namespace ShawLib.Network
         internal TcpClient(Socket client)
         {
             this.client = client;
-
-            queueReceive = new Queue<byte[]>();
-            queueSend = new Queue<byte[]>();
-
-            lock_queueReceive = new object();
-            lock_queueSend = new object();
-
-            // only be able to bind one client to the port
-            if (!client.Connected)
-                client.ExclusiveAddressUse = true;
-
-            // rise the maximun buffer, this allow bigger packets up to 
-            client.ReceiveBufferSize = int.MaxValue;
-            client.SendBufferSize = int.MaxValue;
         }
 
         void onConnectEvent()
@@ -82,32 +65,14 @@ namespace ShawLib.Network
                 handler(this, new ReceiveEventArgs(this, bytes));
         }
 
-        void taskHandle()
-        {
-            while (client != null && !stop)
-            {
-                if (queueReceive.Count > 0)
-                {
-                    // get the latest received bytes and cann the receive event
-                    byte[] bytes;
-                    lock (lock_queueReceive)
-                        bytes = queueReceive.Dequeue();
-
-                    onReceiveEvent(bytes);
-                }
-                else
-                    Thread.Sleep(1);
-            }
-        }
-
-        void taskReceive()
+        void receive()
         {
             var lengthBytes = new byte[4];
             byte[] buffer;
 
             try
             {
-                while (client != null && !stop)
+                while (client != null)
                 {
                     // Receive packet length
                     if (client.Receive(lengthBytes) != lengthBytes.Length)
@@ -122,66 +87,16 @@ namespace ShawLib.Network
                     // Receive packet bytes
                     buffer = new byte[length];
                     if (client.Receive(buffer) != length)
-                        throw new Exception("Disconnected");
+                        throw new Exception("Disconnected, packet length did not match");
 
                     // Enqueue bytes into receive queue
-                    lock (lock_queueReceive)
-                        queueReceive.Enqueue(buffer);
+                    onReceiveEvent(buffer);
                 }
             }
             catch (Exception ex)
             {
                 onDisconnectEvent(ex);
             }
-        }
-
-        void taskSend()
-        {
-            var lengthBytes = new byte[4];
-            byte[] buffer;
-
-            try
-            {
-                while (client != null && !stop)
-                {
-                    if (queueSend.Count > 0)
-                    {
-                        // dequeue the next packet which should be send
-                        byte[] bytes;
-                        lock (lock_queueSend)
-                            bytes = queueSend.Dequeue();
-
-                        if (bytes.Length + lengthBytes.Length > client.SendBufferSize)
-                            throw new Exception("packet length above limit");
-
-                        // Send the bytes of the packet over the network stream
-                        lengthBytes = BitConverter.GetBytes(bytes.Length);
-                        buffer = new byte[bytes.Length + lengthBytes.Length];
-                        Buffer.BlockCopy(lengthBytes, 0, buffer, 0, lengthBytes.Length);
-                        Buffer.BlockCopy(bytes, 0, buffer, lengthBytes.Length, bytes.Length);
-                        client.Send(buffer);
-                    }
-                    else
-                        Thread.Sleep(1);
-                }
-            }
-            catch (Exception ex)
-            {
-                onDisconnectEvent(ex);
-            }
-        }
-
-        /// <summary>
-        /// Stats to connect to a server asynchronous
-        /// </summary>
-        /// <param name="ip">The server ip address</param>
-        /// <param name="port">The server port</param>
-        public void StartConnect(IPAddress ip, int port)
-        {
-            if (taskConnect != null && !taskConnect.IsCompleted)
-                return;
-
-            taskConnect = Task.Run(() => Connect(ip, port));
         }
 
         /// <summary>
@@ -191,6 +106,17 @@ namespace ShawLib.Network
         /// <param name="port">The server port</param>
         public void Connect(IPAddress ip, int port, int timeout = 3000)
         {
+            if (client == null)
+                client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+            // only be able to bind one client to the port
+            if (!client.Connected && !client.IsBound)
+                client.ExclusiveAddressUse = true;
+
+            // rise the maximun buffer, this allow bigger packets up to 
+            client.ReceiveBufferSize = int.MaxValue;
+            client.SendBufferSize = int.MaxValue;
+
             bool success = false;
 
             try
@@ -219,20 +145,17 @@ namespace ShawLib.Network
             onConnectEvent();
         }
 
-        Thread[] threads;
+        public void Disconnect()
+        {
+            client.Dispose();
+            client = null;
+        }
 
         internal void Start()
         {
-            // create new threads send/receive/handle
-            threads = new Thread[] {
-                new Thread(taskReceive) { IsBackground = true },
-                new Thread(taskSend) { IsBackground = true },
-                new Thread(taskHandle) { IsBackground = true }
-            };
-
-            // run these threads
-            foreach (var thread in threads)
-                thread.Start();
+            threadReceive = new Thread(receive);
+            threadReceive.IsBackground = true;
+            threadReceive.Start();
         }
 
         /// <summary>
@@ -245,10 +168,20 @@ namespace ShawLib.Network
             if (!client.Connected)
                 return false;
 
-            // enqueue the bytes into the send queue
-            lock (lock_queueSend)
-                queueSend.Enqueue(bytes);
-            return true;
+            if (bytes.Length + 4 > client.SendBufferSize)
+                throw new Exception("packet length above limit");
+
+            // Send the bytes of the packet over the network stream
+            bytes = BitConverter.GetBytes(bytes.Length).Add(bytes);
+            try
+            {
+                client.Send(bytes);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -267,13 +200,8 @@ namespace ShawLib.Network
 
             if (disposing)
             {
-                // wait for pending packets to be send
-                while (queueSend.Count > 0)
-                    Thread.Sleep(1);
-
-                stop = true;
-                threads[1].Join();
                 client.Dispose();
+                client = null;
             }
 
             disposed = true;
