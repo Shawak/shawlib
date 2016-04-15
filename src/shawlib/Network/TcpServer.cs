@@ -53,7 +53,7 @@ namespace ShawLib.Network
             listener.Listen(100);
 
             // Start accepting incoming sockets
-            threadAcceptSockts = new Thread(taskAcceptSockets);
+            threadAcceptSockts = new Thread(acceptSockets);
             threadAcceptSockts.IsBackground = true;
             threadAcceptSockts.Start();
         }
@@ -72,7 +72,7 @@ namespace ShawLib.Network
                 threadAcceptSockts.Abort();
         }
 
-        void taskAcceptSockets()
+        void acceptSockets()
         {
             // accept sockets while there is a listener
             while (listener != null)
