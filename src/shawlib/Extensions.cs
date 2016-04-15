@@ -1,9 +1,12 @@
-﻿using System;
+﻿using ShawLib.Network;
+using ShawLib.Packet;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace ShawLib
@@ -123,6 +126,16 @@ namespace ShawLib
             return data;
         }
 
+        // Bytes
+
+        public static byte[] Add(this byte[] buffer, byte[] bytes)
+        {
+            var ret = new byte[buffer.Length + bytes.Length];
+            Buffer.BlockCopy(buffer, 0, ret, 0, buffer.Length);
+            Buffer.BlockCopy(bytes, 0, ret, buffer.Length, bytes.Length);
+            return ret;
+        }
+
         // DateTime
 
         public static DateTime ConvertFromUnixTimestamp(this uint timestamp)
@@ -143,6 +156,26 @@ namespace ShawLib
         public static T To<T>(this IConvertible value) where T : IConvertible
         {
             return (T)Convert.ChangeType(value, typeof(T), CultureInfo.InvariantCulture);
+        }
+
+        // TcpClient
+
+        public static T SendWait<T>(this TcpClient client, MethodLinker<IPacket> linker, IPacket packet, int timeout = 5000) where T : IPacket
+        {
+            T ret = default(T);
+
+            var handler = new ManualResetEvent(false);
+            linker.Link<T>(e =>
+            {
+                ret = e;
+                handler.Set();
+            });
+
+            if (client.Send(PacketManager.Pack(packet)))
+                handler.WaitOne(timeout);
+
+            linker.Unlink<T>();
+            return ret;
         }
 
         // Forms
