@@ -53,11 +53,10 @@ namespace ShawLib.Network
 
         void onDisconnectEvent(Exception ex)
         {
-            Disconnect();
-
             var handler = OnDisconnect;
             if (handler != null)
                 handler(this, new ExceptionEventArgs(ex));
+            Disconnect();
         }
 
         void onReceiveEvent(byte[] bytes)
