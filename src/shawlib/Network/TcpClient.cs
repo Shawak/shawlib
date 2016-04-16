@@ -53,6 +53,8 @@ namespace ShawLib.Network
 
         void onDisconnectEvent(Exception ex)
         {
+            Disconnect();
+
             var handler = OnDisconnect;
             if (handler != null)
                 handler(this, new ExceptionEventArgs(ex));
@@ -147,8 +149,11 @@ namespace ShawLib.Network
 
         public void Disconnect()
         {
-            client.Dispose();
-            client = null;
+            if (client != null)
+            {
+                client.Dispose();
+                client = null;
+            }
         }
 
         internal void Start()
@@ -165,7 +170,7 @@ namespace ShawLib.Network
         /// <returns></returns>
         public bool Send(byte[] bytes)
         {
-            if (!client.Connected)
+            if (!client.Connected && client != null)
                 return false;
 
             if (bytes.Length + 4 > client.SendBufferSize)
@@ -199,10 +204,7 @@ namespace ShawLib.Network
                 return;
 
             if (disposing)
-            {
-                client.Dispose();
-                client = null;
-            }
+                Disconnect();
 
             disposed = true;
         }
