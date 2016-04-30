@@ -17,21 +17,22 @@ namespace ShawLib.Packet
         {
             for (ushort i = 0; i < packetTypes.Length; i++)
             {
-                PacketManager.packetTypes.Add(i, packetTypes[i]);
-                packetIDs.Add(packetTypes[i], i);
+                if (!PacketManager.packetTypes.ContainsValue(packetTypes[i]))
+                {
+                    PacketManager.packetTypes.Add(i, packetTypes[i]);
+                    packetIDs.Add(packetTypes[i], i);
+                }
             }
         }
 
-        public static void Initalize(string nameSpace)
+        public static void Explore(Assembly assembly)
         {
             packetTypes = new Dictionary<ushort, Type>();
             packetIDs = new Dictionary<Type, ushort>();
 
-            var types = Assembly.GetExecutingAssembly().GetTypes().
-                Where(t => t.Namespace == nameSpace
-                    && t.IsClass
-                    && t.GetInterfaces().Contains(typeof(IPacket)))
-                    .OrderBy(x => x.Name).ToArray();
+            var types = assembly.GetTypes()
+                .Where(t => t.IsClass && t.GetInterfaces().Contains(typeof(IPacket)))
+                .OrderBy(x => x.Name).ToArray();
 
             Initalize(types);
         }
