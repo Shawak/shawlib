@@ -64,12 +64,12 @@
       <DependentUpon>Overlay.cs</DependentUpon>
     </Compile>
     <Compile Include="Packet\IPacket.cs" />
-    <Compile Include="MethodLinker.cs" />
-    <Compile Include="Network\TcpClient.cs" />
-    <Compile Include="Network\ClientEventArgs.cs" />
-    <Compile Include="Network\ExceptionEventArgs.cs" />
-    <Compile Include="Network\ReceiveEventArgs.cs" />
-    <Compile Include="Network\TcpServer.cs" />
+    <Compile Include="Network.cs" />
+    <Compile Include="TCP\TcpClient.cs" />
+    <Compile Include="TCP\ClientEventArgs.cs" />
+    <Compile Include="TCP\ExceptionEventArgs.cs" />
+    <Compile Include="TCP\ReceiveEventArgs.cs" />
+    <Compile Include="TCP\TcpServer.cs" />
     <Compile Include="Packet\PacketManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TypeSwitch.cs" />

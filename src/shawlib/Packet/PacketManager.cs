@@ -8,7 +8,7 @@ using System.Text;
 
 namespace ShawLib.Packet
 {
-    public class PacketManager
+    internal class PacketManager
     {
         static Dictionary<ushort, Type> packetTypes;
         static Dictionary<Type, ushort> packetIDs;

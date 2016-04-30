@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ShawLib.Network
+namespace ShawLib.TCP
 {
     public class ClientEventArgs : EventArgs
     {

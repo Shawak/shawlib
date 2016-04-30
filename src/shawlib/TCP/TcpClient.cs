@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ShawLib;
 
-namespace ShawLib.Network
+namespace ShawLib.TCP
 {
     public class TcpClient : IDisposable
     {

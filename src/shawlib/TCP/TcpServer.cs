@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
-namespace ShawLib.Network
+namespace ShawLib.TCP
 {
     public class TcpServer : IDisposable
     {
