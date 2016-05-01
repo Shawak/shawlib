@@ -10,8 +10,8 @@ namespace ShawLib.Packet
 {
     internal class PacketManager
     {
-        static Dictionary<ushort, Type> packetTypes;
-        static Dictionary<Type, ushort> packetIDs;
+        static Dictionary<ushort, Type> packetTypes = new Dictionary<ushort, Type>();
+        static Dictionary<Type, ushort> packetIDs = new Dictionary<Type, ushort>();
 
         public static void Initalize(Type[] packetTypes)
         {
@@ -27,9 +27,6 @@ namespace ShawLib.Packet
 
         public static void Explore(Assembly assembly)
         {
-            packetTypes = new Dictionary<ushort, Type>();
-            packetIDs = new Dictionary<Type, ushort>();
-
             var types = assembly.GetTypes()
                 .Where(t => t.IsClass && t.GetInterfaces().Contains(typeof(IPacket)))
                 .OrderBy(x => x.Name).ToArray();
@@ -47,33 +44,19 @@ namespace ShawLib.Packet
 
         public static byte[] Pack(IPacket packet)
         {
-            // Create packet stream
             var stream = new MemoryStream();
-
-            // Add packet type
             var packetID = packetIDs[packet.GetType()];
             stream.Add(packetID);
-
-            // Add packet bytes
             packet.Pack(ref stream);
-
-            // Return bytes
             return stream.ToArray();
         }
 
         public static IPacket Parse(byte[] data)
         {
-            // Create packet stream
             var stream = new MemoryStream(data);
-
-            // Get packet type
             var packetID = stream.Get<ushort>();
             var packetType = packetTypes[packetID];
-
-            // Get packet bytes and turn it into a packet
             var packet = (IPacket)FormatterServices.GetUninitializedObject(packetType);
-
-            // Parse packet
             packet.Parse(stream);
             return packet;
         }
