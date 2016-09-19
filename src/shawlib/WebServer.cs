@@ -9,7 +9,8 @@ namespace ShawLib
     public class WebServer : IDisposable
     {
         HttpListener listener;
-        Func<HttpListenerRequest, string> method;
+        Func<HttpListenerContext, string> method;
+        Thread thread;
         bool disposed;
 
         /// <summary>
@@ -17,7 +18,7 @@ namespace ShawLib
         /// </summary>
         /// <param name="responseMethod">Function which  handles the request</param>
         /// <param name="prefixes">Urls where the webserver will be accessable on</param>
-        public WebServer(Func<HttpListenerRequest, string> responseMethod, params string[] prefixes)
+        public WebServer(Func<HttpListenerContext, string> responseMethod, params string[] prefixes)
         {
             method = responseMethod;
             listener = new HttpListener();
@@ -27,16 +28,22 @@ namespace ShawLib
 
             foreach (var prefix in prefixes)
                 listener.Prefixes.Add(prefix);
-
-            listener.Start();
         }
 
-        public void Run()
+        public void Start()
         {
-            new Thread(threadRun).Start();
+            if (thread != null)
+                thread.Abort();
+
+            if (listener.IsListening)
+                listener.Stop();
+            listener.Start();
+
+            thread = new Thread(run);
+            thread.Start();
         }
 
-        void threadRun()
+        void run()
         {
             while (listener.IsListening)
             {
@@ -48,10 +55,7 @@ namespace ShawLib
 
                         try
                         {
-                            var ret = method(context.Request);
-                            var buffer = Encoding.UTF8.GetBytes(ret);
-                            context.Response.ContentLength64 = buffer.Length;
-                            context.Response.OutputStream.Write(buffer, 0, buffer.Length);
+                            method(context);
                         }
                         catch (HttpListenerException)
                         {
@@ -59,7 +63,7 @@ namespace ShawLib
                         }
                         finally
                         {
-                            context.Response.Close();
+                            //context.Response.Close();
                         }
                     }, listener.GetContext()).Start();
                 }
@@ -87,7 +91,12 @@ namespace ShawLib
                 return;
 
             if (disposing)
-                listener.Close();
+            {
+                if (listener != null)
+                    listener.Close();
+                if (thread != null)
+                    thread.Abort();
+            }
 
             disposed = true;
         }
