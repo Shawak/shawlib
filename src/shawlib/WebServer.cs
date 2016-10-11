@@ -9,7 +9,7 @@ namespace ShawLib
     public class WebServer : IDisposable
     {
         HttpListener listener;
-        Func<HttpListenerContext, string> method;
+        Action<HttpListenerContext> method;
         Thread thread;
         bool disposed;
 
@@ -18,7 +18,7 @@ namespace ShawLib
         /// </summary>
         /// <param name="responseMethod">Function which  handles the request</param>
         /// <param name="prefixes">Urls where the webserver will be accessable on</param>
-        public WebServer(Func<HttpListenerContext, string> responseMethod, params string[] prefixes)
+        public WebServer(Action<HttpListenerContext> responseMethod, params string[] prefixes)
         {
             method = responseMethod;
             listener = new HttpListener();

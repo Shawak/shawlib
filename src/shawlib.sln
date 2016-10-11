@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "shawlib", "shawlib\shawlib.csproj", "{D4ED6046-C2F8-428F-BCB4-67DFBE2F01EE}"
 EndProject
@@ -11,8 +11,8 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D4ED6046-C2F8-428F-BCB4-67DFBE2F01EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D4ED6046-C2F8-428F-BCB4-67DFBE2F01EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4ED6046-C2F8-428F-BCB4-67DFBE2F01EE}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{D4ED6046-C2F8-428F-BCB4-67DFBE2F01EE}.Debug|Any CPU.Build.0 = Release|Any CPU
 		{D4ED6046-C2F8-428F-BCB4-67DFBE2F01EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4ED6046-C2F8-428F-BCB4-67DFBE2F01EE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
