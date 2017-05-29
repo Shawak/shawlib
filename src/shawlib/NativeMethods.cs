@@ -224,6 +224,35 @@ namespace ShawLib
         }
     }
 
+    public delegate IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam);
+
+    public enum HookType : int
+    {
+        WH_JOURNALRECORD = 0,
+        WH_JOURNALPLAYBACK = 1,
+        WH_KEYBOARD = 2,
+        WH_GETMESSAGE = 3,
+        WH_CALLWNDPROC = 4,
+        WH_CBT = 5,
+        WH_SYSMSGFILTER = 6,
+        WH_MOUSE = 7,
+        WH_HARDWARE = 8,
+        WH_DEBUG = 9,
+        WH_SHELL = 10,
+        WH_FOREGROUNDIDLE = 11,
+        WH_CALLWNDPROCRET = 12,
+        WH_KEYBOARD_LL = 13,
+        WH_MOUSE_LL = 14
+    }
+
+    public enum WindowsMessages : uint
+    {
+        KEYDOWN = 0x100,
+        KEYUP = 0x101,
+        SYSKEYDOWN = 0x104,
+        SYSKEYUP = 0x105
+    }
+
     public static class NativeMethods
     {
         [DllImport("kernel32.dll")]
@@ -277,5 +306,14 @@ namespace ShawLib
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr SetWindowsHookEx(HookType hookType, HookProc lpfn, IntPtr hMod, uint dwThreadId);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        public static extern bool UnhookWindowsHookEx(IntPtr hhk);
     }
 }
